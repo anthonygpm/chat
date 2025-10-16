@@ -39,17 +39,18 @@ cliente.connect(("IP_DO_SERVIDOR", 5000))
 ### Servidor (`server.py`)
 - Cria um socket TCP/IPv4: `socket(AF_INET, SOCK_STREAM)`.
 - Faz `bind((ip, porta))` e `listen()`; na thread principal, chama `accept()` em loop.
-- Mantém uma lista global `clientes` com os sockets conectados.
+- Mantém uma lista global `clientes` e um mapa `nomes` (socket → nome).
 - Para cada novo cliente, cria uma thread (`handle_cliente`) que:
-  - Lê do socket com `recv(1024)`.
-  - Se receber `b''` (vazio), o cliente fechou a conexão → encerra a thread e remove da lista.
-  - Caso contrário, chama `broadcast(mensagem, cliente)` para enviar a todos os outros.
+  - Recebe primeiro o nome do usuário (primeira mensagem), salva em `nomes` e anuncia: "<nome> entrou no chat." para todos.
+  - Em seguida, lê mensagens de texto com `recv(1024)`; se receber `b''` (vazio), o cliente fechou a conexão → encerra e remove.
+  - Para cada texto recebido, prefixa "<nome>: ..." e chama `broadcast` para enviar aos demais clientes.
 
 ### Cliente (`client.py`)
 - Conecta ao servidor com `connect((ip, porta))`.
 - Lê a primeira mensagem do servidor e pede o nome ao usuário.
+- Envia apenas o nome como primeira mensagem; o servidor anuncia a entrada e passará a prefixar o nome nas mensagens subsequentes.
 - Cria uma thread para receber mensagens (fica em `recv()` e imprime).
-- Na thread principal, lê do teclado (`input()`) e envia com `send()`.
+- Na thread principal, lê do teclado (`input()`) e envia apenas o texto; o servidor prefixa "<nome>: ...".
 
 ## Conceitos importantes
 - `AF_INET`: Address Family IPv4 (endereços como `( "127.0.0.1", 5000 )`).
@@ -61,8 +62,9 @@ cliente.connect(("IP_DO_SERVIDOR", 5000))
 
 ## Limitações atuais
 - Não há protocolo de mensagens (delimitador ou tamanho). Mensagens > 1024 bytes podem ser quebradas.
-- O servidor não armazena nomes; o cliente prefixa o nome no texto enviado.
 - A lista `clientes` é modificada por múltiplas threads sem locks (ok para demo, arriscado em produção).
+- O servidor não valida nomes duplicados nem autentica usuários.
+- `except:` genérico esconde erros específicos.
 
 ## Melhorias sugeridas
 - Definir protocolo por linhas (terminar mensagens com `\n`) ou prefixo de tamanho.
