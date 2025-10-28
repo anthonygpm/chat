@@ -25,7 +25,7 @@ def iniciar_cliente():
 
     # Primeira mensagem de boas-vindas do servidor
     print(cliente.recv(1024).decode("utf-8")) # decodifica bytes para string e exibe
-    nome = input("Seu nome: ")
+    nome = input("Digite seu nome:")
     cliente.send(nome.encode("utf-8")) # envia apenas o nome; o servidor anuncia "entrou"
 
     # Thread para receber mensagens

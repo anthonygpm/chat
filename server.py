@@ -36,18 +36,7 @@ def handle_cliente(cliente):
         # Anuncia entrada para todos (inclusive para quem entrou)
         anuncio_entrada = f"{nome} entrou no chat.".encode("utf-8")
         # Para enviar a todos, passamos cliente_atual=None
-        for c in clientes[:]:
-            try:
-                c.send(anuncio_entrada)
-            except:
-                try:
-                    c.close()
-                finally:
-                    if c in clientes:
-                        clientes.remove(c)
-                    if c in nomes:
-                        del nomes[c]
-
+        broadcast(anuncio_entrada,None)
         # Loop principal de mensagens
         while True:
             mensagem = cliente.recv(1024)  # bytes da rede
@@ -72,17 +61,7 @@ def handle_cliente(cliente):
                 nome = nomes.pop(cliente)
                 try:
                     anuncio_saida = f"{nome} saiu do chat.".encode("utf-8")
-                    for c in clientes[:]:
-                        try:
-                            c.send(anuncio_saida)
-                        except:
-                            try:
-                                c.close()
-                            finally:
-                                if c in clientes:
-                                    clientes.remove(c)
-                                if c in nomes:
-                                    del nomes[c]
+                    broadcast(anuncio_saida,None)
                 except:
                     pass
 
@@ -97,7 +76,7 @@ def iniciar_servidor():
         cliente, endereco = servidor.accept() # Aceita uma nova conexão, obtendo um novo socket para comunicação com o cliente e o endereço do cliente
         print(f"Conectado a {endereco}") # Mostra o endereço do cliente conectado
         clientes.append(cliente) # Adiciona o novo cliente à lista de clientes conectados
-        cliente.send("Bem-vindo ao chat! Digite seu nome:".encode("utf-8"))
+        cliente.send("Bem-vindo ao chat!".encode("utf-8"))
         thread = threading.Thread(target=handle_cliente, args=(cliente,)) # Cria uma nova thread para tratar as mensagens do cliente
         thread.start() # Inicia a thread
 
