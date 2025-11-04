@@ -68,9 +68,9 @@ def handle_cliente(cliente):
 # Configura o servidor
 def iniciar_servidor():
     servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Cria um socket TCP. AF_INET (Address Family) indica IPv4 e SOCK_STREAM (Socket Type) indica TCP
-    servidor.bind(("127.0.0.1", 5000))  # Associa o socket a um endereço IP e porta. Reserva o par para o processo
+    servidor.bind(("0.0.0.0", 5000))  # Associa o socket a um endereço IP e porta. Reserva o par para o processo
     servidor.listen() # Começa a escutar conexões
-    print("Servidor iniciado em 127.0.0.1:5000")
+    print("Servidor iniciado.")
 
     while True:
         cliente, endereco = servidor.accept() # Aceita uma nova conexão, obtendo um novo socket para comunicação com o cliente e o endereço do cliente

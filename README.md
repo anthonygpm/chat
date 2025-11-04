@@ -26,14 +26,46 @@ python3 client.py
 3. Cada mensagem enviada por um cliente é enviada a todos os demais clientes conectados. O remetente não recebe eco da própria mensagem pelo servidor.
 
 ### Executando em rede local (LAN)
-- Servidor: altere o bind em `server.py` para escutar em todas as interfaces:
-```python
-servidor.bind(("0.0.0.0", 5000))
-```
+- Servidor: o código já escuta em todas as interfaces (`0.0.0.0:5000`). Basta iniciar o servidor na máquina host.
 - Cliente(s): altere o IP em `client.py` para o IP da máquina do servidor:
 ```python
 cliente.connect(("IP_DO_SERVIDOR", 5000))
 ```
+
+Como descobrir o IP do servidor:
+- Linux (Terminal):
+  ```bash
+  hostname -I
+  # ou
+  ip addr show | grep -Eo 'inet (\d+\.){3}\d+' | awk '{print $2}'
+  ```
+- Windows:
+  - Prompt de Comando: `ipconfig` (use o IPv4 da interface conectada)
+  - PowerShell (opcional):
+    ```powershell
+    (Get-NetIPConfiguration | Where-Object {$_.IPv4Address}).IPv4Address.IPAddress
+    ```
+- macOS (Terminal):
+  ```bash
+  ipconfig getifaddr en0   # Wi‑Fi costuma ser en0; se vazio, tente en1
+  # ou
+  ifconfig | grep -Eo 'inet (\d+\.){3}\d+' | awk '{print $2}'
+  ```
+
+Firewall (se necessário):
+- Linux (UFW):
+  ```bash
+  sudo ufw allow 5000/tcp
+  ```
+- Windows Defender Firewall:
+  - GUI: crie uma regra de entrada TCP porta 5000 permitida.
+  - PowerShell:
+    ```powershell
+    New-NetFirewallRule -DisplayName "Chat TCP 5000" -Direction Inbound -Protocol TCP -LocalPort 5000 -Action Allow
+    ```
+- macOS: permita conexões de entrada para o Python quando o sistema solicitar (local do Firewall varia por versão do macOS).
+
+Observação: servidor e clientes devem estar na mesma rede/sub-rede (ex.: 192.168.x.x ou 10.x.x.x). Redes de convidados podem bloquear conexões locais.
 
 ## Como funciona (resumo)
 ### Servidor (`server.py`)
@@ -41,7 +73,7 @@ cliente.connect(("IP_DO_SERVIDOR", 5000))
 - Faz `bind((ip, porta))` e `listen()`; na thread principal, chama `accept()` em loop.
 - Mantém uma lista global `clientes` e um mapa `nomes` (socket → nome).
 - Para cada novo cliente, cria uma thread (`handle_cliente`) que:
-  - Recebe primeiro o nome do usuário (primeira mensagem), salva em `nomes` e anuncia: "<nome> entrou no chat." para todos.
+ Você verá: `Servidor iniciado.`
   - Em seguida, lê mensagens de texto com `recv(1024)`; se receber `b''` (vazio), o cliente fechou a conexão → encerra e remove.
   - Para cada texto recebido, prefixa "<nome>: ..." e chama `broadcast` para enviar aos demais clientes.
 
@@ -62,6 +94,18 @@ cliente.connect(("IP_DO_SERVIDOR", 5000))
 
 ## Limitações atuais
 - Não há protocolo de mensagens (delimitador ou tamanho). Mensagens > 1024 bytes podem ser quebradas.
+ Como descobrir o IP do servidor (Linux):
+ ```bash
+ hostname -I
+ # ou
+ ip addr show | grep -Eo 'inet (\d+\.){3}\d+' | awk '{print $2}'
+ ```
+ Use o IP da interface conectada ao Wi‑Fi/rede local (geralmente 192.168.x.x ou 10.x.x.x).
+
+ Se necessário, libere a porta no firewall:
+ ```bash
+ sudo ufw allow 5000/tcp
+ ```
 - A lista `clientes` é modificada por múltiplas threads sem locks (ok para demo, arriscado em produção).
 - O servidor não valida nomes duplicados nem autentica usuários.
 - `except:` genérico esconde erros específicos.
